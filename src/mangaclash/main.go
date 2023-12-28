@@ -156,7 +156,7 @@ func Download(link string, downloadPath string){
 		chapterPath, _ := filepath.Abs(filepath.Join(rootPath, chapterName))
 		err := os.MkdirAll(chapterPath, os.ModePerm)
 		if err != nil {
-			fmt.Errorf("error creating chapter folder: %w", err)
+			fmt.Fprintf(os.Stderr, "error creating chapter folder: %v\n", err)
 			os.Exit(1)
 		}
 	}
