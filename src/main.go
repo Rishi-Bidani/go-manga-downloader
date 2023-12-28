@@ -4,7 +4,6 @@ import (
 	mc "downloader/src/mangaclash"
 	"flag"
 	"fmt"
-	"log"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -18,42 +17,34 @@ func getBaseURL(link string) (string, error) {
 	return url.Scheme + "://" + url.Host, nil
 }
 
-// func logger(filePath string, text string) {
-// 	f, err := os.OpenFile(filePath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0664)
-
-// }
-
 func main() {
-	{
-		// setup logger
-		f, err := os.OpenFile("log.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0664)
-		if err != nil {
-			log.Fatalf("error opening file: %v", err)
-		}
-		log.SetOutput(f)
-		defer f.Close()
-	}
-
 	// link := "https://mangaclash.com/manga/shadowless-night/"
 	link := *flag.String("link", "https://mangaclash.com/manga/shadowless-night/", "link to manga")
+	rootFolder := *flag.String("folder", "test", "root folder to download manga")
 	flag.Parse()
 
-	downloadPath, err := filepath.Abs(filepath.Join("test"))
+	downloadPath, err := filepath.Abs(filepath.Join(rootFolder))
 	if err != nil {
+		fmt.Fprintf(os.Stderr, "error getting absolute path: %v\n", err)
 		os.Exit(1)
 	}
 
 	baseURL, err := getBaseURL(link)
 	if err != nil {
-		log.Fatal(err)
-	}
-
-	switch baseURL {
-	case "https://mangaclash.com":
-		mc.Download(link, downloadPath)
-	default:
-		// exit with error
-		fmt.Println("Invalid URL")
+		fmt.Fprintf(os.Stderr, "error parsing url: %v\n", err)
 		os.Exit(1)
 	}
+
+	// =================================================================================
+	// switch case for different baseURL
+	// =================================================================================
+	switch baseURL {
+		case "https://mangaclash.com":
+			mc.Download(link, downloadPath)
+		default:
+			// exit with error
+			fmt.Println("Invalid URL")
+			os.Exit(1)
+	}
+	// =================================================================================
 }
