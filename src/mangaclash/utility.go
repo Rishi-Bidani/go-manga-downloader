@@ -13,7 +13,7 @@ import (
 )
 
 
-func getChapterLinks(link string) ([]ChapterData, MangaData){
+func getChapterLinksAndMangaDetails(link string) ([]ChapterData, MangaData){
 	c := colly.NewCollector()
 
 	// chapterlink array

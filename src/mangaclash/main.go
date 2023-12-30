@@ -96,7 +96,7 @@ func Download(link string, downloadPath string){
 		Download function will download the manga from the link provided
 		It will download all the chapters and images
 	*/
-	chapterLinks, mangaDetails := getChapterLinks(link)
+	chapterLinks, mangaDetails := getChapterLinksAndMangaDetails(link)
 	
 	// create a folder for the manga
 	mangaName := mangaDetails.Name
@@ -120,7 +120,7 @@ func Download(link string, downloadPath string){
 		defer f.Close()
 		// =================================================================================
 	}
-	
+
 	// =====================================================================================
 	// get image links for each chapter
 	// =====================================================================================
@@ -175,4 +175,27 @@ func Download(link string, downloadPath string){
 	}
 	wg2.Wait()
 	// =======================================================
+}
+
+func DownloadChapter(rootPath string, chapterLink string, mangaDetails MangaData) {
+	chapterImgArr := getImageLinks(mangaDetails.Name, chapterLink)
+	chapterPath, err := filepath.Abs(filepath.Join(rootPath, mangaDetails.Name))
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "error getting absolute path: %v\n", err)
+		os.Exit(1)
+	}
+	err = os.MkdirAll(chapterPath, os.ModePerm)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "error creating chapter folder: %v\n", err)
+		os.Exit(1)
+	}
+
+	var wg sync.WaitGroup
+	for _, ci := range chapterImgArr {
+		wg.Add(1)
+		go func(_ci ChapterImage) {
+			downloadImage(chapterPath, _ci)
+			defer wg.Done()
+		}(ci)
+	}
 }
