@@ -19,11 +19,16 @@ func getBaseURL(link string) (string, error) {
 
 func main() {
 	// link := "https://mangaclash.com/manga/shadowless-night/"
-	link := *flag.String("link", "https://mangaclash.com/manga/shadowless-night/", "link to manga")
-	rootFolder := *flag.String("folder", "test", "root folder to download manga")
+	_link := flag.String("link", "https://mangaclash.com/manga/shadowless-night/", "link to manga")
+	_rootFolder := flag.String("folder", "test", "root folder to download manga")
+	_downloadSingleChapter := flag.Bool("single", false, "download single chapter")
 	flag.Parse()
 
-	downloadPath, err := filepath.Abs(filepath.Join(rootFolder))
+	link := *_link
+	rootFolder := *_rootFolder
+	downloadSingleChapter := *_downloadSingleChapter
+
+	pathRoot, err := filepath.Abs(filepath.Join(rootFolder))
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "error getting absolute path: %v\n", err)
 		os.Exit(1)
@@ -40,7 +45,12 @@ func main() {
 	// =================================================================================
 	switch baseURL {
 		case "https://mangaclash.com":
-			mc.Download(link, downloadPath)
+			if downloadSingleChapter {
+				// download single chapter
+				mc.DownloadChapter(pathRoot, link)
+			} else {
+				mc.Download(link, pathRoot)
+			}
 		default:
 			// exit with error
 			fmt.Println("Invalid URL")

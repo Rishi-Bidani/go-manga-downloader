@@ -17,3 +17,20 @@ type MangaData struct {
 	Genres []string
 	Description string
 }
+
+type MangaMetaData struct {
+	Name string
+	Description string
+	Genres []string
+	NumberOfChapters int
+	Chapters [] struct {
+		Name string
+		ReleaseDate string
+		Link string
+		NumberOfImages int
+		Images [] struct {
+			ImageLink string
+			ImageName string
+		}
+	}
+}

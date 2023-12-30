@@ -5,13 +5,13 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
 
 	"github.com/gocolly/colly"
 )
-
 
 func getChapterLinksAndMangaDetails(link string) ([]ChapterData, MangaData){
 	c := colly.NewCollector()
@@ -52,6 +52,32 @@ func getChapterLinksAndMangaDetails(link string) ([]ChapterData, MangaData){
 	return chapterLinkArr, mangaDetails
 }
 
+func getSingleChapterLinkAndMangaDetails(chapterLink string) (ChapterData, MangaData){
+	link := strings.Split(chapterLink, "/chapter")[0]
+	
+	mangaLink, _ := url.Parse(link)
+	// strip the chapter part from the link - split by / and remove the last element
+	mangaLinkPath := strings.Split(mangaLink.Path, "/")
+	mangaLink.Path = strings.Join(mangaLinkPath[:len(mangaLinkPath)-1], "/")
+
+	chapterLinks, mangaDetails := getChapterLinksAndMangaDetails(link)
+
+	cd := ChapterData{}
+
+	for _, chapter := range chapterLinks {
+		if chapter.Link == chapterLink {
+			cd = chapter
+			break
+		}
+	}
+	if cd.Link == "" {
+		fmt.Println("Chapter not found")
+		os.Exit(1)
+	}
+
+	return cd, mangaDetails
+}
+
 func getImageLinks(chapterName string, chapterLink string) []ChapterImage{
 	c := colly.NewCollector()
 	ChapterImageArr := []ChapterImage{}
@@ -69,7 +95,7 @@ func getImageLinks(chapterName string, chapterLink string) []ChapterImage{
 	})
 
 	c.OnError(func(_ *colly.Response, err error) {
-		fmt.Println("Something went wrong:", err)
+		fmt.Fprintf(os.Stderr, "error getting image links: %v\n", err)
 		os.Exit(1)
 	})
 	
@@ -95,14 +121,15 @@ func downloadImage(rootPath string, imageData ChapterImage) {
 	// open a file for writing
 	file, err := os.Create(imagePath)
 	if err != nil {
-		log.Fatal("Error creating file: ", err)
+		log.Fatal("[FAILED] Error creating file: ", err)
 	}
 	defer file.Close()
 
 	// write the body to file
 	_, err = io.Copy(file, response.Body)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal("[FAILED] Error writing to file: ", imagePath, err)
 	}
 	fmt.Println("Download Success!", imagePath)
+	log.Println("[DOWNLOAD SUCCESS]", imagePath)
 }
