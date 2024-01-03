@@ -126,6 +126,61 @@ func Download(link string, pathRoot string){
 	mangaMetaData(pathRootManga, manga, chapterLinks, masterImageArr)
 }
 
+func DownloadChapterRange(link string, pathRoot string, start int, end int){
+	/*
+		DownloadChapterRange function will download the manga from the link provided
+		It will download all the chapters and images
+	*/
+	chapterLinks, manga := getChapterLinksAndMangaDetails(link)
+	// reverse the chapterLinks array
+	for i := len(chapterLinks)/2-1; i >= 0; i-- {
+		opp := len(chapterLinks)-1-i
+		chapterLinks[i], chapterLinks[opp] = chapterLinks[opp], chapterLinks[i]
+	}
+	
+	
+	// create a folder for the manga
+	pathRootManga, _ := filepath.Abs(filepath.Join(pathRoot, manga.Name))
+	err := os.MkdirAll(pathRootManga, os.ModePerm)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "error creating manga folder: %v\n", err)
+		os.Exit(1)
+	}
+
+	{
+		// =================================================================================
+		// setup logger
+		// =================================================================================
+		var f *os.File
+		var err error
+		if LOG_SET == false {
+			f, err = os.OpenFile(filepath.Join(pathRootManga, "log.log"), os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0664)
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "error opening log file: %v\n", err)
+				os.Exit(1)
+			}
+			log.SetOutput(f)
+			defer f.Close()
+			LOG_SET = true
+		}
+		// = end setup logger =============================================================
+	}
+	masterImageArr := []ChapterImage{}
+	fmt.Println("Downloading chapters", start, "to", end, "of", len(chapterLinks))
+	// download all chapters
+	var wg sync.WaitGroup
+	for i, chapter := range chapterLinks {
+		if i >= start && i <= end {
+			wg.Add(1)
+			go func(_chapter ChapterData) {
+				downloadChapter(pathRoot, _chapter.Link, _chapter, manga, &masterImageArr)
+				defer wg.Done()
+			}(chapter)
+		}
+	}
+	wg.Wait()
+}
+
 func DownloadChapter(rootPath string, chapterLink string){
 	chapter, mangaDetails := getSingleChapterLinkAndMangaDetails(chapterLink)
 	downloadChapter(rootPath, chapterLink, chapter, mangaDetails, nil)

@@ -21,12 +21,15 @@ func main() {
 	// link := "https://mangaclash.com/manga/shadowless-night/"
 	_link := flag.String("link", "https://mangaclash.com/manga/shadowless-night/", "link to manga")
 	_rootFolder := flag.String("folder", "test", "root folder to download manga")
-	_downloadSingleChapter := flag.Bool("single", false, "download single chapter")
+	_downloadSingleChapter := flag.Bool("single", false, "download single chapter boolean. If true, link must be a chapter link")
+	_downloadStart := flag.Int("start", -1, "start chapter. Do not provide if attempting to download single or all chapters. Link must be a manga link")
+	_downloadEnd := flag.Int("end", -1, "end chapter. Do not provide if attempting to download single or all chapters. Link must be a manga link")
 	flag.Parse()
 
 	link := *_link
 	rootFolder := *_rootFolder
 	downloadSingleChapter := *_downloadSingleChapter
+	
 
 	pathRoot, err := filepath.Abs(filepath.Join(rootFolder))
 	if err != nil {
@@ -40,6 +43,14 @@ func main() {
 		os.Exit(1)
 	}
 
+	var start, end int
+	downloadChapterRange := false
+	if *_downloadStart != -1 && *_downloadEnd != -1 {
+		start = *_downloadStart
+		end = *_downloadEnd
+		downloadChapterRange = true
+	}
+
 	// =================================================================================
 	// switch case for different baseURL
 	// =================================================================================
@@ -48,6 +59,9 @@ func main() {
 			if downloadSingleChapter {
 				// download single chapter
 				mc.DownloadChapter(pathRoot, link)
+			} else if downloadChapterRange {
+				// download chapter range
+				mc.DownloadChapterRange(link, pathRoot, start, end)
 			} else {
 				mc.Download(link, pathRoot)
 			}
