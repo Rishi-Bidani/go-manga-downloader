@@ -2,6 +2,7 @@ package main
 
 import (
 	mc "downloader/src/mangaclash"
+	rd "downloader/src/readmorg"
 	"flag"
 	"fmt"
 	"net/url"
@@ -19,7 +20,7 @@ func getBaseURL(link string) (string, error) {
 
 func main() {
 	// link := "https://mangaclash.com/manga/shadowless-night/"
-	_link := flag.String("link", "https://mangaclash.com/manga/shadowless-night/", "link to manga")
+	_link := flag.String("link", "https://readm.org/manga/owari-no-seraph/", "link to manga")
 	_rootFolder := flag.String("folder", "test", "root folder to download manga")
 	_downloadSingleChapter := flag.Bool("single", false, "download single chapter boolean. If true, link must be a chapter link")
 	_downloadStart := flag.Int("start", -1, "start chapter. Do not provide if attempting to download single or all chapters. Link must be a manga link")
@@ -65,6 +66,14 @@ func main() {
 			} else {
 				mc.Download(link, pathRoot)
 			}
+
+		case "https://readm.org":
+			if downloadSingleChapter {
+				rd.DownloadChapter(pathRoot, link)
+			} else {
+				rd.Download(pathRoot, link)
+			}
+		
 		default:
 			// exit with error
 			fmt.Println("Invalid URL")
