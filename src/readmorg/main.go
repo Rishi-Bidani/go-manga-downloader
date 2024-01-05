@@ -18,20 +18,8 @@ func isNumber(s string) bool {
 
 
 func Download(pathRoot string, link string) {
-	mangaDetails := getMangaData(link)
-
-	chapterLinks := mangaDetails.ChapterLinks
-
-	var wg sync.WaitGroup
-	for _, chapterLink := range chapterLinks {
-		wg.Add(1)
-		go func(_chapterLink string) {
-			defer wg.Done()
-			DownloadChapter(pathRoot, _chapterLink)
-		}(chapterLink)
-	}
-	
-	wg.Wait()
+	const FULL_MANGA = -1
+	DownloadChapterRange(pathRoot, link, 0, FULL_MANGA)
 }
 
 func DownloadChapter(pathRoot string, link string) ChapterData {
@@ -96,4 +84,28 @@ func DownloadChapter(pathRoot string, link string) ChapterData {
 	return chapterDetails
 }
 
-func DownloadChapterRange(pathRoot string, link string, start int, end int) {}
+func DownloadChapterRange(pathRoot string, link string, start int, end int) {
+	mangaDetails := getMangaData(link)
+	chapterLinks := mangaDetails.ChapterLinks
+	// reverse chapterLinks
+	for i, j := 0, len(chapterLinks)-1; i < j; i, j = i+1, j-1 {
+		chapterLinks[i], chapterLinks[j] = chapterLinks[j], chapterLinks[i]
+	}
+
+	if end == -1 {
+		end = len(chapterLinks) - 1
+	}
+
+	var wg sync.WaitGroup
+	for index, chapterLink := range chapterLinks {
+		if index >= start && index <= end {
+			wg.Add(1)
+			go func(_chapterLink string) {
+				defer wg.Done()
+				DownloadChapter(pathRoot, _chapterLink)
+			}(chapterLink)
+		}
+	}
+
+	wg.Wait()
+}
