@@ -10,6 +10,18 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+type MangaClash struct {}
+func (m MangaClash) Download(pathRoot string, link string) {
+	download(pathRoot, link)
+}
+func (m MangaClash) DownloadChapter(pathRoot string, link string) {
+	downloadChapter(pathRoot, link)
+}
+
+func (m MangaClash) DownloadChapterRange(pathRoot string, link string, start int, end int) {
+	downloadChapterRange(link, pathRoot, start, end)
+}
+
 var LOG_SET bool = false
 
 func mangaMetaData (filePath string, manga MangaData, chapterArr []ChapterData, imageArr []ChapterImage){
@@ -76,7 +88,7 @@ func mangaMetaData (filePath string, manga MangaData, chapterArr []ChapterData, 
 	}
 }
 
-func Download(link string, pathRoot string){
+func download(link string, pathRoot string){
 	/*
 		Download function will download the manga from the link provided
 		It will download all the chapters and images
@@ -116,7 +128,7 @@ func Download(link string, pathRoot string){
 	for _, chapter := range chapterLinks {
 		wg.Add(1)
 		go func(_chapter ChapterData) {
-			downloadChapter(pathRoot, _chapter.Link, _chapter, manga, &masterImageArr)
+			_downloadChapter(pathRoot, _chapter.Link, _chapter, manga, &masterImageArr)
 			defer wg.Done()
 		}(chapter)
 	}
@@ -126,7 +138,7 @@ func Download(link string, pathRoot string){
 	mangaMetaData(pathRootManga, manga, chapterLinks, masterImageArr)
 }
 
-func DownloadChapterRange(link string, pathRoot string, start int, end int){
+func downloadChapterRange(link string, pathRoot string, start int, end int){
 	/*
 		DownloadChapterRange function will download the manga from the link provided
 		It will download all the chapters and images
@@ -173,7 +185,7 @@ func DownloadChapterRange(link string, pathRoot string, start int, end int){
 		if i >= start && i <= end {
 			wg.Add(1)
 			go func(_chapter ChapterData) {
-				downloadChapter(pathRoot, _chapter.Link, _chapter, manga, &masterImageArr)
+				_downloadChapter(pathRoot, _chapter.Link, _chapter, manga, &masterImageArr)
 				defer wg.Done()
 			}(chapter)
 		}
@@ -181,12 +193,12 @@ func DownloadChapterRange(link string, pathRoot string, start int, end int){
 	wg.Wait()
 }
 
-func DownloadChapter(rootPath string, chapterLink string){
+func downloadChapter(rootPath string, chapterLink string){
 	chapter, mangaDetails := getSingleChapterLinkAndMangaDetails(chapterLink)
-	downloadChapter(rootPath, chapterLink, chapter, mangaDetails, nil)
+	_downloadChapter(rootPath, chapterLink, chapter, mangaDetails, nil)
 }
 
-func downloadChapter(rootPath string, chapterLink string, chapter ChapterData, mangaDetails MangaData, masterImageArr *[]ChapterImage) {
+func _downloadChapter(rootPath string, chapterLink string, chapter ChapterData, mangaDetails MangaData, masterImageArr *[]ChapterImage) {
 	// if chapter data is not provided, get it
 	if (chapter == (ChapterData{})) && (mangaDetails.Name == "") {
 		chapter, mangaDetails = getSingleChapterLinkAndMangaDetails(chapterLink)

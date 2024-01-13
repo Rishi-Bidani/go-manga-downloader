@@ -8,6 +8,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 
 	"github.com/gocolly/colly"
@@ -146,4 +147,9 @@ func writeChapterDetailsToFile(pathRootMangaChapter string, chapterDetails Chapt
 		fmt.Fprintf(os.Stderr, "error encoding chapter details: %v\n", err)
 		os.Exit(1)
 	}
+}
+
+func isNumber(s string) bool {
+	_, err := strconv.Atoi(s)
+	return err == nil
 }

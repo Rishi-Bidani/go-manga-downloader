@@ -1,8 +1,9 @@
 package main
 
 import (
-	mc "downloader/src/mangaclash"
-	rd "downloader/src/readmorg"
+	plugin "downloader/src/plugins"
+	mc "downloader/src/plugins/mangaclash"
+	rd "downloader/src/plugins/readmorg"
 	"flag"
 	"fmt"
 	"math"
@@ -54,34 +55,60 @@ func main() {
 		downloadChapterRange = true
 	}
 
-	// =================================================================================
-	// switch case for different baseURL
-	// =================================================================================
+	// plugin for different website
+	var plugin plugin.IMangaDownloader
+
 	switch baseURL {
 		case "https://mangaclash.com":
-			if downloadSingleChapter {
-				// download single chapter
-				mc.DownloadChapter(pathRoot, link)
-			} else if downloadChapterRange {
-				// download chapter range
-				mc.DownloadChapterRange(link, pathRoot, start, end)
-			} else {
-				mc.Download(link, pathRoot)
-			}
-
+			plugin = &mc.MangaClash{}
+		
 		case "https://readm.org":
-			if downloadSingleChapter {
-				rd.DownloadChapter(pathRoot, link)
-			} else if downloadChapterRange {
-				rd.DownloadChapterRange(pathRoot, link, start, end) 
-			}else {
-				rd.Download(pathRoot, link)
-			}
+			plugin = &rd.ReadmOrg{}
 		
 		default:
 			// exit with error
 			fmt.Println("Invalid URL")
 			os.Exit(1)
 	}
+
+	if downloadSingleChapter {
+		// download single chapter
+		plugin.DownloadChapter(pathRoot, link)
+	} else if downloadChapterRange {
+		// download chapter range
+		plugin.DownloadChapterRange(pathRoot, link, start, end)
+	} else {
+		plugin.Download(pathRoot, link)
+	}
+
+	// =================================================================================
+	// switch case for different baseURL
+	// =================================================================================
+	// switch baseURL {
+	// 	case "https://mangaclash.com":
+	// 		if downloadSingleChapter {
+	// 			// download single chapter
+	// 			mc.DownloadChapter(pathRoot, link)
+	// 		} else if downloadChapterRange {
+	// 			// download chapter range
+	// 			mc.DownloadChapterRange(link, pathRoot, start, end)
+	// 		} else {
+	// 			mc.Download(link, pathRoot)
+	// 		}
+
+	// 	case "https://readm.org":
+	// 		if downloadSingleChapter {
+	// 			rd.DownloadChapter(pathRoot, link)
+	// 		} else if downloadChapterRange {
+	// 			rd.DownloadChapterRange(pathRoot, link, start, end) 
+	// 		}else {
+	// 			rd.Download(pathRoot, link)
+	// 		}
+		
+	// 	default:
+	// 		// exit with error
+	// 		fmt.Println("Invalid URL")
+	// 		os.Exit(1)
+	// }
 	// =================================================================================
 }

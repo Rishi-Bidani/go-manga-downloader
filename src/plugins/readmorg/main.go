@@ -11,18 +11,29 @@ import (
 	"downloader/src/helpers"
 )
 
-func isNumber(s string) bool {
-	_, err := strconv.Atoi(s)
-	return err == nil
+// implement IMangaDownloader
+type ReadmOrg struct {}
+
+func (m ReadmOrg) Download(pathRoot string, link string) {
+	download(pathRoot, link)
+}
+func (m ReadmOrg) DownloadChapter(pathRoot string, link string) {
+	downloadChapter(pathRoot, link)
+}
+func (m ReadmOrg) DownloadChapterRange(pathRoot string, link string, start int, end int) {
+	downloadChapterRange(pathRoot, link, start, end)
 }
 
+// ===========================================================================================================
+// DOWNLOADERS ===============================================================================================
+// ===========================================================================================================
 
-func Download(pathRoot string, link string) {
+func download(pathRoot string, link string) {
 	const FULL_MANGA = -1
-	DownloadChapterRange(pathRoot, link, 0, FULL_MANGA)
+	downloadChapterRange(pathRoot, link, 0, FULL_MANGA)
 }
 
-func DownloadChapter(pathRoot string, link string) ChapterData {
+func downloadChapter(pathRoot string, link string) ChapterData {
 	chapterDetails, err := getChapterDetails(link)
 	if err != nil {
 		if err.Error() == "404" {
@@ -84,7 +95,7 @@ func DownloadChapter(pathRoot string, link string) ChapterData {
 	return chapterDetails
 }
 
-func DownloadChapterRange(pathRoot string, link string, start int, end int) {
+func downloadChapterRange(pathRoot string, link string, start int, end int) {
 	mangaDetails := getMangaData(link)
 	chapterLinks := mangaDetails.ChapterLinks
 	// reverse chapterLinks
@@ -102,7 +113,7 @@ func DownloadChapterRange(pathRoot string, link string, start int, end int) {
 			wg.Add(1)
 			go func(_chapterLink string) {
 				defer wg.Done()
-				DownloadChapter(pathRoot, _chapterLink)
+				downloadChapter(pathRoot, _chapterLink)
 			}(chapterLink)
 		}
 	}
