@@ -12,6 +12,9 @@ import (
 	"path/filepath"
 )
 
+// getBaseURL returns the base url of the link
+// e.g. https://example.com/abc/def/ghi returns https://example.com
+// Error is returned if link is invalid i.e. it can't be parsed by url.Parse()
 func getBaseURL(link string) (string, error) {
 	url, err := url.Parse(link)
 	if err != nil {
@@ -20,10 +23,34 @@ func getBaseURL(link string) (string, error) {
 	return url.Scheme + "://" + url.Host, nil
 }
 
+// getPlugin returns the plugin for the website
+// currently supported websites:
+// - https://mangaclash.com
+// - https://readm.org
+// If the website is not supported, the program will exit with error
+func getPlugin(baseUrl string) plugin.IMangaDownloader {
+	switch baseUrl {
+		case "https://mangaclash.com":
+			return &mc.MangaClash{}
+		
+		case "https://readm.org":
+			return &rd.ReadmOrg{}
+		
+		default:
+			// exit with error
+			fmt.Println("Invalid URL")
+			os.Exit(1)
+	}
+	return nil
+}
+
 
 func main() {
 	// link := "https://mangaclash.com/manga/shadowless-night/"
-	_link := flag.String("link", "https://readm.org/manga/owari-no-seraph/", "link to manga")
+	// ==========================================================================================================================================================
+	// flags
+	// ==========================================================================================================================================================
+	_link := flag.String("link", "", "link to manga")
 	_rootFolder := flag.String("folder", "test", "root folder to download manga")
 	_downloadSingleChapter := flag.Bool("single", false, "download single chapter boolean. If true, link must be a chapter link")
 	_downloadStart := flag.Int("start", 0, "start chapter. Do not provide if attempting to download single or all chapters. Link must be a manga link")
@@ -33,7 +60,7 @@ func main() {
 	link := *_link
 	rootFolder := *_rootFolder
 	downloadSingleChapter := *_downloadSingleChapter
-	
+	// ==========================================================================================================================================================
 
 	pathRoot, err := filepath.Abs(filepath.Join(rootFolder))
 	if err != nil {
@@ -41,12 +68,14 @@ func main() {
 		os.Exit(1)
 	}
 
+	// check if link is valid and get base url to determine which plugin to use
 	baseURL, err := getBaseURL(link)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "error parsing url: %v\n", err)
 		os.Exit(1)
 	}
 
+	// checking if user is downloading a specific range of chapters
 	var start, end int
 	downloadChapterRange := false
 	if *_downloadStart != 0 || *_downloadEnd != int(math.Inf(-1)) {
@@ -56,21 +85,15 @@ func main() {
 	}
 
 	// plugin for different website
-	var plugin plugin.IMangaDownloader
-
-	switch baseURL {
-		case "https://mangaclash.com":
-			plugin = &mc.MangaClash{}
-		
-		case "https://readm.org":
-			plugin = &rd.ReadmOrg{}
-		
-		default:
-			// exit with error
-			fmt.Println("Invalid URL")
-			os.Exit(1)
+	plugin := getPlugin(baseURL)
+	if plugin == nil {
+		fmt.Fprintf(os.Stderr, "error getting plugin\n")
+		os.Exit(1)
 	}
 
+	// ==============================================================
+	// download manga
+	// ==============================================================
 	if downloadSingleChapter {
 		// download single chapter
 		plugin.DownloadChapter(pathRoot, link)
@@ -80,35 +103,5 @@ func main() {
 	} else {
 		plugin.Download(pathRoot, link)
 	}
-
-	// =================================================================================
-	// switch case for different baseURL
-	// =================================================================================
-	// switch baseURL {
-	// 	case "https://mangaclash.com":
-	// 		if downloadSingleChapter {
-	// 			// download single chapter
-	// 			mc.DownloadChapter(pathRoot, link)
-	// 		} else if downloadChapterRange {
-	// 			// download chapter range
-	// 			mc.DownloadChapterRange(link, pathRoot, start, end)
-	// 		} else {
-	// 			mc.Download(link, pathRoot)
-	// 		}
-
-	// 	case "https://readm.org":
-	// 		if downloadSingleChapter {
-	// 			rd.DownloadChapter(pathRoot, link)
-	// 		} else if downloadChapterRange {
-	// 			rd.DownloadChapterRange(pathRoot, link, start, end) 
-	// 		}else {
-	// 			rd.Download(pathRoot, link)
-	// 		}
-		
-	// 	default:
-	// 		// exit with error
-	// 		fmt.Println("Invalid URL")
-	// 		os.Exit(1)
-	// }
-	// =================================================================================
+	// ==============================================================
 }

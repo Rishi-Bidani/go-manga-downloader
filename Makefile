@@ -19,6 +19,6 @@ run-rdm-ch: clean
 run-rdm-range: clean
 	go run src/main.go -link="https://readm.org/manga/owari-no-seraph/" -start=0 -end=2
 
-build: clean
+build:
 	go build -o bin/main src/main.go
 	
